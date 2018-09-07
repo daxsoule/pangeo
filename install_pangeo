@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+set -e
+
+# create new proxy token
+TOKEN=`openssl rand -hex 32`
+echo $TOKEN > .proxytoken
+
+# replace secrets
+sed -i '' -e "s/^  secretToken.*/  secretToken: \"$TOKEN\"/" secret-config.yaml
+ID=`cat .clientid`
+sed -i '' -e "s/^    clientId.*/    clientId: \"$ID\"/" secret-config.yaml
+SECRET=`cat .clientsecret`
+sed -i '' -e "s/^    clientSecret.*/    clientSecret: \"$SECRET\"/" secret-config.yaml
+
+# set up helm and tiller
+set +e
+if ! kubectl get sa -n kube-system tiller > /dev/null; then
+  kubectl create serviceaccount tiller --namespace=kube-system
+  helm init --service-account tiller
+  kubectl --namespace=kube-system patch deployment tiller-deploy --type=json --patch='[{"op": "add", "path": "/spec/template/spec/containers/0/command", "value": ["/tiller", "--listen=localhost:44134"]}]'
+fi
+set -e
+
+# wait for tiller to come up
+printf "\nWaiting for tiller to come up ..."
+test=`helm status 2>&1 | cut -d' ' -f1-2`
+while [[ $test != "Error: release" ]]; do
+  test=`helm status 2>&1 | cut -d' ' -f1-2`
+  sleep 1
+done
+printf " done.\n\n"
+
+# update repo
+helm repo add jupyterhub https://jupyterhub.github.io/helm-chart
+helm repo update
+
+# install jupyterhub on the cluster
+echo "Installing pangeo."
+helm install jupyterhub/jupyterhub --version=v0.7-d540c9f --name=pangeo --namespace=pangeo --timeout=600 -f secret-config.yaml -f jupyter-config.yaml
+
+# unreplace secrets
+sed -i '' -e "s/^  secretToken.*/  secretToken: SECRET/" secret-config.yaml
+sed -i '' -e "s/^    clientId.*/    clientId: ID/" secret-config.yaml
+sed -i '' -e "s/^    clientSecret.*/    clientSecret: SECRET/" secret-config.yaml
