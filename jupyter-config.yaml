@@ -14,7 +14,7 @@ rbac:
 hub:
   extraConfig: |
     #c.KubeSpawner.service_account = 'default'
-    c.JupyterHub.authenticator_class = 'dummyauthenticator.DummyAuthenticator'
+    #c.JupyterHub.authenticator_class = 'dummyauthenticator.DummyAuthenticator'
     c.KubeSpawner.singleuser_service_account = 'daskkubernetes'
     c.KubeSpawner.start_timeout = 60 * 10 # 10-minute timeout for Azure
     c.Spawner.default_url = '/lab'
