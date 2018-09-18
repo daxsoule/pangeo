@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
-# move into pangeo directory
-PANGEO_DIR='/Users/tjc/research/flowmow/pangeo'
-cd $PANGEO_DIR
-
 # check git status
 git diff --exit-code > /dev/null
 
@@ -14,7 +10,7 @@ if [ $? -eq 0 ]; then
   TAG=`git rev-parse --short HEAD`
 
   # update worker-template tag
-  cd "$PANGEO_DIR/docker"
+  cd "docker"
   sed -i '' "s/    image.*/    image: tjcrone\/pangeo-notebook:${TAG}/" worker-template.yaml
 
   # build notebook
@@ -25,7 +21,7 @@ if [ $? -eq 0 ]; then
   docker push "$NAME:$TAG"
 
   # update jupyter-config
-  cd $PANGEO_DIR
+  cd ..
   sed -i '' "s/    tag.*/    tag: ${TAG}/" jupyter-config.yaml
 
 else
