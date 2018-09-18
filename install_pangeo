@@ -8,10 +8,10 @@ echo $TOKEN > .proxytoken
 
 # replace secrets
 sed -i '' -e "s/^  secretToken.*/  secretToken: \"$TOKEN\"/" secret-config.yaml
-#ID=`cat .clientid`
-#sed -i '' -e "s/^    clientId.*/    clientId: \"$ID\"/" secret-config.yaml
-#SECRET=`cat .clientsecret`
-#sed -i '' -e "s/^    clientSecret.*/    clientSecret: \"$SECRET\"/" secret-config.yaml
+ID=`cat .clientid`
+sed -i '' -e "s/^    clientId.*/    clientId: \"$ID\"/" secret-config.yaml
+SECRET=`cat .clientsecret`
+sed -i '' -e "s/^    clientSecret.*/    clientSecret: \"$SECRET\"/" secret-config.yaml
 
 # set up helm and tiller
 set +e
