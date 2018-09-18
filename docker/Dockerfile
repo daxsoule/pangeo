@@ -47,6 +47,7 @@ RUN conda install --yes  \
     scikit-image \
     xarray \
     zict \
+    obspy \
     && conda clean -tipsy
 
 RUN pip install --upgrade pip

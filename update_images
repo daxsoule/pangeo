@@ -11,10 +11,10 @@ if [ $? -eq 0 ]; then
 
   # update worker-template tag
   cd "docker"
-  sed -i '' "s/    image.*/    image: tjcrone\/pangeo-notebook:${TAG}/" worker-template.yaml
+  sed -i '' "s/    image.*/    image: daxsoule\/pangeo-notebook:${TAG}/" worker-template.yaml
 
   # build notebook
-  NAME='tjcrone/pangeo-notebook'
+  NAME='daxsoule/pangeo-notebook'
   docker build --pull --no-cache -t "$NAME:$TAG" .
 
   # push notebook
