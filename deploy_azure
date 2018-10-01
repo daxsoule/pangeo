@@ -21,13 +21,13 @@ set -e
 # 7) run this file on a not-windows machine
 
 # settings
-USER="NL.QC.SEES@gmail.com"
+USER="neanderthallab@gmail.com"
 DTIME=`date "+%Y%m%d%H%M%S"`
 RESOURCE_GROUP="NeanderthalLab"
 # currently (17 April 2018) k8s only available in:
 # eastus, westeurope, centralus, canadacentral, canadaeast
 LOCATION="centralus"
-SUBSCRIPTION="Microsoft Azure Sponsorship 2"
+SUBSCRIPTION="17dca634-b8f1-4244-9ace-666aedc0be25"
 CLUSTER_NAME="nlsees-$DTIME"
 MACHINE="Standard_D4_v3"
 NODE_COUNT=3
