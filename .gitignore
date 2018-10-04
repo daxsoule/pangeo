@@ -1,3 +1,4 @@
 .proxytoken
 .clientid
 .clientsecret
+aks-cluster-autoscaler.yaml

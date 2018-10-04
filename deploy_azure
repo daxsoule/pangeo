@@ -27,14 +27,14 @@ RESOURCE_GROUP="NeanderthalLab"
 # currently (17 April 2018) k8s only available in:
 # eastus, westeurope, centralus, canadacentral, canadaeast
 LOCATION="centralus"
-SUBSCRIPTION="17dca634-b8f1-4244-9ace-666aedc0be25"
+SUBSCRIPTION_ID="17dca634-b8f1-4244-9ace-666aedc0be25"
 CLUSTER_NAME="nlsees-$DTIME"
 MACHINE="Standard_D4_v3"
-NODE_COUNT=3
+NODE_COUNT=4
 
 # setup azure and local env
 echo "Setting account name."
-az account set -s "$SUBSCRIPTION"
+az account set -s "$SUBSCRIPTION_ID"
 printf "\nCreating resource group.\n"
 az group create --name="$RESOURCE_GROUP" --location="$LOCATION" --output table
 
@@ -46,7 +46,8 @@ az provider register --name Microsoft.ContainerService --wait
 
 # create an AKS cluster
 printf "\nCreating cluster.\n"
-az aks create --name $CLUSTER_NAME --resource-group $RESOURCE_GROUP --generate-ssh-keys --node-count $NODE_COUNT --node-vm-size $MACHINE --kubernetes-version 1.10.3 --output table
+az aks create --name $CLUSTER_NAME --resource-group $RESOURCE_GROUP --generate-ssh-keys --node-count $NODE_COUNT --node-vm-size $MACHINE --kubernetes-version 1.11.3 --output table
+#az aks create --name $CLUSTER_NAME --resource-group $RESOURCE_GROUP --generate-ssh-keys --node-count $NODE_COUNT --node-vm-size $MACHINE --output table
 
 # get credentials
 printf "\nGetting AKS credentials.\n"
@@ -62,3 +63,215 @@ az network lb delete --name kubernetes --resource-group $LB_GROUP
 printf "\nMoving static IP address into the new resource group.\n"
 AUTO_GROUP="MC_${RESOURCE_GROUP}_${CLUSTER_NAME}_${LOCATION}"
 az resource move --destination-group $AUTO_GROUP --ids $IP_ID
+
+# install autoscaler
+printf "\nInstalling autoscaler.\n"
+TENANT_ID=`az account show --query tenantId -o json`
+TENANT_ID_64=`echo $TENANT_ID | tr -d '"' | base64`
+CLUSTER_NAME_64=`echo $CLUSTER_NAME | base64`
+RESOURCE_GROUP_64=`echo $RESOURCE_GROUP | base64`
+PERMISSIONS=`az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/$SUBSCRIPTION_ID" -o json`
+CLIENT_ID_64=`echo $PERMISSIONS | sed -e 's/^.*"appId"[ ]*:[ ]*"//' -e 's/".*//' | base64`
+CLIENT_SECRET_64=`echo $PERMISSIONS | sed -e 's/^.*"password"[ ]*:[ ]*"//' -e 's/".*//' | base64`
+SUBSCRIPTION_ID_64=`echo $SUBSCRIPTION_ID | base64 `
+NODE_RESOURCE_GROUP_64=`az aks show --name $CLUSTER_NAME --resource-group $RESOURCE_GROUP -o tsv --query 'nodeResourceGroup' | base64`
+
+echo "apiVersion: v1
+kind: Secret
+metadata:
+    name: cluster-autoscaler-azure
+    namespace: kube-system
+data:
+    ClientID: $CLIENT_ID_64
+    ClientSecret: $CLIENT_SECRET_64
+    ResourceGroup: $RESOURCE_GROUP_64
+    SubscriptionID: $SUBSCRIPTION_ID_64
+    TenantID: $TENANT_ID_64
+    VMType: QUtTCg==
+    ClusterName: $CLUSTER_NAME_64
+    NodeResourceGroup: $NODE_RESOURCE_GROUP_64
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    k8s-addon: cluster-autoscaler.addons.k8s.io
+    k8s-app: cluster-autoscaler
+  name: cluster-autoscaler
+  namespace: kube-system
+
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: cluster-autoscaler
+  labels:
+    k8s-addon: cluster-autoscaler.addons.k8s.io
+    k8s-app: cluster-autoscaler
+rules:
+- apiGroups: [\"\"]
+  resources: ["events","endpoints"]
+  verbs: ["create", "patch"]
+- apiGroups: [\"\"]
+  resources: ["pods/eviction"]
+  verbs: ["create"]
+- apiGroups: [\"\"]
+  resources: ["pods/status"]
+  verbs: ["update"]
+- apiGroups: [\"\"]
+  resources: ["endpoints"]
+  resourceNames: ["cluster-autoscaler"]
+  verbs: ["get","update"]
+- apiGroups: [\"\"]
+  resources: ["nodes"]
+  verbs: ["watch","list","get","update"]
+- apiGroups: [\"\"]
+  resources: ["pods","services","replicationcontrollers","persistentvolumeclaims","persistentvolumes"]
+  verbs: ["watch","list","get"]
+- apiGroups: ["extensions"]
+  resources: ["replicasets","daemonsets"]
+  verbs: ["watch","list","get"]
+- apiGroups: ["policy"]
+  resources: ["poddisruptionbudgets"]
+  verbs: ["watch","list"]
+- apiGroups: ["apps"]
+  resources: ["statefulsets"]
+  verbs: ["watch","list","get"]
+- apiGroups: ["storage.k8s.io"]
+  resources: ["storageclasses"]
+  verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  name: cluster-autoscaler
+  namespace: kube-system
+  labels:
+    k8s-addon: cluster-autoscaler.addons.k8s.io
+    k8s-app: cluster-autoscaler
+rules:
+- apiGroups: [\"\"]
+  resources: ["configmaps"]
+  verbs: ["create"]
+- apiGroups: [\"\"]
+  resources: ["configmaps"]
+  resourceNames: ["cluster-autoscaler-status"]
+  verbs: ["delete","get","update"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-autoscaler
+  labels:
+    k8s-addon: cluster-autoscaler.addons.k8s.io
+    k8s-app: cluster-autoscaler
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-autoscaler
+subjects:
+  - kind: ServiceAccount
+    name: cluster-autoscaler
+    namespace: kube-system
+
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  name: cluster-autoscaler
+  namespace: kube-system
+  labels:
+    k8s-addon: cluster-autoscaler.addons.k8s.io
+    k8s-app: cluster-autoscaler
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: cluster-autoscaler
+subjects:
+  - kind: ServiceAccount
+    name: cluster-autoscaler
+    namespace: kube-system
+
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: cluster-autoscaler
+  name: cluster-autoscaler
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cluster-autoscaler
+  template:
+    metadata:
+      labels:
+        app: cluster-autoscaler
+    spec:
+      serviceAccountName: cluster-autoscaler
+      containers:
+      - image: k8s.gcr.io/cluster-autoscaler:v1.3.3
+        imagePullPolicy: Always
+        name: cluster-autoscaler
+        resources:
+          limits:
+            cpu: 100m
+            memory: 300Mi
+          requests:
+            cpu: 100m
+            memory: 300Mi
+        command:
+        - ./cluster-autoscaler
+        - --v=3
+        - --logtostderr=true
+        - --cloud-provider=azure
+        - --skip-nodes-with-local-storage=false
+        - --nodes=4:20:nodepool1
+        env:
+        - name: ARM_SUBSCRIPTION_ID
+          valueFrom:
+            secretKeyRef:
+              key: SubscriptionID
+              name: cluster-autoscaler-azure
+        - name: ARM_RESOURCE_GROUP
+          valueFrom:
+            secretKeyRef:
+              key: ResourceGroup
+              name: cluster-autoscaler-azure
+        - name: ARM_TENANT_ID
+          valueFrom:
+            secretKeyRef:
+              key: TenantID
+              name: cluster-autoscaler-azure
+        - name: ARM_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              key: ClientID
+              name: cluster-autoscaler-azure
+        - name: ARM_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: ClientSecret
+              name: cluster-autoscaler-azure
+        - name: ARM_VM_TYPE
+          valueFrom:
+            secretKeyRef:
+              key: VMType
+              name: cluster-autoscaler-azure
+        - name: AZURE_CLUSTER_NAME
+          valueFrom:
+            secretKeyRef:
+              key: ClusterName
+              name: cluster-autoscaler-azure
+        - name: AZURE_NODE_RESOURCE_GROUP
+          valueFrom:
+            secretKeyRef:
+              key: NodeResourceGroup
+              name: cluster-autoscaler-azure
+      restartPolicy: Always" > aks-cluster-autoscaler.yaml
+kubectl create -f aks-cluster-autoscaler.yaml
