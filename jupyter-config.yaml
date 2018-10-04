@@ -1,6 +1,6 @@
 singleuser:
   image:
-    name: daxsoule/pangeo-notebook
+    name: neanderthallab/pangeo-notebook
     tag: 26ba30f
   cmd: ['start-singleuser.sh']
   memory:
