@@ -11,7 +11,7 @@ RUN wget https://packages.cloud.google.com/apt/doc/apt-key.gpg -q -O - | sudo ap
 
 RUN apt-get update \
   && apt-get install -yq --no-install-recommends \
-        vim git jq less openssh-client google-cloud-sdk \
+        vim git jq less openssh-client google-cloud-sdk zip unzip \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
@@ -54,7 +54,7 @@ RUN pip install --upgrade pip
 RUN pip install numpngw \
                 azure-storage-blob
 RUN pip install git+https://github.com/tjcrone/pycamhd@8bdc18647ec20b0a49dc140d3f71b8ef9dba17a9
-RUN pip install git+https://github.com/tjcrone/flowmow
+RUN pip install git+https://github.com/tjcrone/driveanon
 
 RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager
 RUN jupyter labextension install jupyterlab_bokeh
