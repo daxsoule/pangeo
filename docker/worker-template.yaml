@@ -11,7 +11,7 @@ spec:
       - 6GB
       - --death-timeout
       - '60'
-    image: neanderthallab/pangeo-notebook:32c8210
+    image: neanderthallab/pangeo-notebook:0ccc094
     name: dask-worker
     securityContext:
       capabilities:
