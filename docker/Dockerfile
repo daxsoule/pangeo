@@ -21,7 +21,7 @@ RUN conda update -n base conda
 RUN conda config --add channels conda-forge --force
 RUN conda install --yes  \
     av>=0.4.0 \
-    bokeh=0.12.16 \
+    bokeh \
     cython \
     cytoolz \
     dask \
