@@ -8,7 +8,7 @@ spec:
       - '2'
       - --no-bokeh
       - --memory-limit
-      - 4GB
+      - 6GB
       - --death-timeout
       - '60'
     image: neanderthallab/pangeo-notebook:32c8210
@@ -22,4 +22,4 @@ spec:
         value: pangeo-data
     resources:
       requests:
-        memory: 2G
+        memory: 6G
