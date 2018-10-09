@@ -11,7 +11,7 @@ RUN wget https://packages.cloud.google.com/apt/doc/apt-key.gpg -q -O - | sudo ap
 
 RUN apt-get update \
   && apt-get install -yq --no-install-recommends \
-        vim git jq less openssh-client google-cloud-sdk zip unzip \
+        vim git jq less openssh-client google-cloud-sdk zip unzip man-db \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
