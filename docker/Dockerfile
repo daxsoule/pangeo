@@ -53,7 +53,7 @@ RUN conda install --yes  \
 RUN pip install --upgrade pip
 RUN pip install numpngw \
                 azure-storage-blob
-RUN pip install git+https://github.com/tjcrone/pycamhd@1085787fad3595b5413b4d0cc508bb4ce17ed998
+RUN pip install git+https://github.com/tjcrone/pycamhd@d9cc0741f736a770dd1a19d39108026adc0deca2
 RUN pip install git+https://github.com/tjcrone/driveanon
 
 RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager
