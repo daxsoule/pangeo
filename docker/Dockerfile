@@ -28,6 +28,7 @@ RUN conda install --yes  \
     dask-kubernetes \
     distributed \
     google-cloud-storage \
+    hvplot \
     imagehash \
     ipywidgets \
     julia \
