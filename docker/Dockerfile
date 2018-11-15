@@ -26,11 +26,20 @@ RUN conda install --yes  \
     cytoolz \
     dask \
     dask-kubernetes \
+    datashader \
     distributed \
     google-cloud-storage \
-    hvplot \
+    pyviz/label/dev::geoviews \
+    pyviz/label/dev::holoviews \
+    pyviz/label/dev::hvplot \
     imagehash \
+    intake::intake \
+    intake::intake-xarray \
     ipywidgets \
+    jupyter \
+    jupyterlab=0.35 \
+    jupyterlab_launcher \
+    jupyter_client \
     julia \
     lz4 \
     matplotlib \
@@ -41,9 +50,11 @@ RUN conda install --yes  \
     numcodecs \
     numpy \
     pandas \
+    pyviz/label/dev::panel \
     pyproj \
     pytables \
     python-blosc \
+    python-graphviz \
     scipy \
     scikit-image \
     xarray \
@@ -58,6 +69,7 @@ RUN pip install git+https://github.com/tjcrone/pycamhd@d9cc0741f736a770dd1a19d39
 RUN pip install git+https://github.com/tjcrone/driveanon
 
 RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager
+RUN jupyter labextension install @pyviz/jupyterlab_pyviz
 RUN jupyter labextension install jupyterlab_bokeh
 
 USER root
