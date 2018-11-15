@@ -1,7 +1,7 @@
 singleuser:
   image:
     name: neanderthallab/pangeo-notebook
-    tag: 310f880
+    tag: 38cf930
   cmd: ['start-singleuser.sh']
   memory:
     guarantee: 12G
