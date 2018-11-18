@@ -26,10 +26,20 @@ RUN conda install --yes  \
     cytoolz \
     dask \
     dask-kubernetes \
+    datashader \
     distributed \
     google-cloud-storage \
+    pyviz/label/dev::geoviews \
+    pyviz/label/dev::holoviews \
+    pyviz/label/dev::hvplot \
     imagehash \
+    intake::intake \
+    intake::intake-xarray \
     ipywidgets \
+    jupyter \
+    jupyterlab=0.35 \
+    jupyterlab_launcher \
+    jupyter_client \
     julia \
     lz4 \
     matplotlib \
@@ -40,9 +50,11 @@ RUN conda install --yes  \
     numcodecs \
     numpy \
     pandas \
+    pyviz/label/dev::panel \
     pyproj \
     pytables \
     python-blosc \
+    python-graphviz \
     scipy \
     scikit-image \
     xarray \
@@ -53,10 +65,11 @@ RUN conda install --yes  \
 RUN pip install --upgrade pip
 RUN pip install numpngw \
                 azure-storage-blob
-RUN pip install git+https://github.com/tjcrone/pycamhd@8bdc18647ec20b0a49dc140d3f71b8ef9dba17a9
+RUN pip install git+https://github.com/tjcrone/pycamhd@d9cc0741f736a770dd1a19d39108026adc0deca2
 RUN pip install git+https://github.com/tjcrone/driveanon
 
 RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager
+RUN jupyter labextension install @pyviz/jupyterlab_pyviz
 RUN jupyter labextension install jupyterlab_bokeh
 
 USER root
