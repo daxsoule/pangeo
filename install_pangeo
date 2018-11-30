@@ -38,7 +38,10 @@ helm repo update
 
 # install jupyterhub on the cluster
 echo "Installing pangeo."
-helm install jupyterhub/jupyterhub --version=v0.7-d540c9f --name=pangeo --namespace=pangeo --timeout=600 -f secret-config.yaml -f jupyter-config.yaml
+#helm install jupyterhub/jupyterhub --version=v0.7-d540c9f --name=pangeo --namespace=pangeo --timeout=600 -f secret-config.yaml -f jupyter-config.yaml
+#helm install jupyterhub/jupyterhub --version=v0.7 --name=pangeo --namespace=pangeo --timeout=600 -f secret-config.yaml -f jupyter-config.yaml
+#helm install jupyterhub/jupyterhub --version=v0.8-a169247 --name=pangeo --namespace=pangeo --timeout=600 -f secret-config.yaml -f jupyter-config.yaml
+helm install jupyterhub/jupyterhub --version=v0.8-676f4f3 --name=pangeo --namespace=pangeo --timeout=600 -f secret-config.yaml -f jupyter-config.yaml
 
 # create the kubernetesdask service account and role bindings
 if ! kubectl get serviceaccounts -n pangeo daskkubernetes > /dev/null; then
