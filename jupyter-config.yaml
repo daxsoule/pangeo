@@ -38,5 +38,5 @@ prePuller:
 cull:
   enabled: true
   users: false
-  timeout: 1200
+  timeout: 7200
   every: 120
