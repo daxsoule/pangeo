@@ -12,22 +12,25 @@ rbac:
   enabled: true
 
 hub:
-  extraConfig: {'c.KubeSpawner.singleuser_service_account': '"daskkubernetes"',
-                'c.KubeSpawner.start_timeout':  '600',
-                'c.Spawner.default_url': '["/lab"]',
-                'c.Spawner.cmd': '["jupyter-labhub"]',
-                'c.KubeSpawner.environment': '"{}"'}
-
-#    from kubernetes import client
-#    def modify_pod_hook(spawner, pod):
-#        pod.spec.containers[0].security_context = client.V1SecurityContext(
-#            privileged=True,
-#            capabilities=client.V1Capabilities(
-#                add=['SYS_ADMIN']
-#            )
-#        )
-#        return pod
-#    c.KubeSpawner.modify_pod_hook = modify_pod_hook
+  extraConfig:
+    myConfigName: |
+      #c.KubeSpawner.service_account = 'default'
+      #c.JupyterHub.authenticator_class = 'dummyauthenticator.DummyAuthenticator'
+      c.KubeSpawner.singleuser_service_account = 'daskkubernetes'
+      c.KubeSpawner.start_timeout = 60 * 10 # 10-minute timeout for Azure
+      c.Spawner.default_url = '/lab'
+      c.Spawner.cmd = ['jupyter-labhub']
+      from kubernetes import client
+      def modify_pod_hook(spawner, pod):
+          pod.spec.containers[0].security_context = client.V1SecurityContext(
+              privileged=True,
+              capabilities=client.V1Capabilities(
+                  add=['SYS_ADMIN']
+              )
+          )
+          return pod
+      c.KubeSpawner.modify_pod_hook = modify_pod_hook
+      c.KubeSpawner.environment = {}
 
 prePuller:
   hook:
