@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+set -e
+
+# definitions
+#USER_NAME="tjcrone"
+#USER_NAME="daxsoule"
+#USER_NAME="emiliotesin100"
+#USER_NAME="epesar"
+USER_NAME="jnatalie12"
+SOURCE_CLUSTER="nlsees-20181101133134"
+DESTINATION_CLUSTER="nlsees-20181206161000"
+LOCATION="centralus"
+RESOURCE_GROUP="NeanderthalLab"
+NAMESPACE="pangeo"
+
+# switch to source cluster
+printf "Switching to source cluster ${SOURCE_CLUSTER}.\n"
+az aks get-credentials --name ${SOURCE_CLUSTER} --resource-group ${RESOURCE_GROUP}
+
+# collect information
+PVC_NAME="claim-${USER_NAME}"
+PV_NAME=`kubectl get pvc -n pangeo ${PVC_NAME} -o=jsonpath='{.spec.volumeName}'`
+RESOURCE_NAME="kubernetes-dynamic-${PV_NAME}"
+RESOURCE_ID=`az resource list --name ${RESOURCE_NAME} --query [*].[id] --output tsv`
+DESTINATION_AUTO_GROUP="MC_${RESOURCE_GROUP}_${DESTINATION_CLUSTER}_${LOCATION}"
+
+# build pvc yaml file
+printf "\nBuilding pvc yaml file ${USER_NAME}-pvc.yaml\n"
+kubectl get pvc -n ${NAMESPACE} ${PVC_NAME} -o yaml | \
+  grep -v "phase: Bound" | \
+  grep -v "resourceVersion: " | \
+  grep -v "creationTimestamp: " | \
+  grep -v "uid: " > "${USER_NAME}-pvc.yaml"
+
+# build pv yaml file
+printf "\nBuilding pv yaml file ${USER_NAME}-pv.yaml\n"
+kubectl get pv ${PV_NAME} -o yaml | \
+  grep -v "creationTimestamp: " | \
+  grep -v "^  claimRef:" | \
+  grep -v "^    apiVersion: " | \
+  grep -v "^    kind: PersistentVolumeClaim" | \
+  grep -v "^    name: ${PVC_NAME}" | \
+  grep -v "^    namespace: ${NAMESPACE}" | \
+  grep -v "resourceVersion: " | \
+  grep -v "^status:" | \
+  grep -v "phase: Bound" | \
+  grep -v "uid: " | \
+  sed "s/Delete/Retain/" | \
+  sed "s/${SOURCE_CLUSTER}/${DESTINATION_CLUSTER}/" \
+  > "${USER_NAME}-pv.yaml"
+
+# move disk
+printf "\nMoving disk ${PV_NAME} to ${DESTINATION_CLUSTER}.\n"
+az resource move --destination-group $DESTINATION_AUTO_GROUP --ids $RESOURCE_ID
+
+# delete pv and pvc in source cluster
+#printf "\nDeleting source pv and pvc.\n"
+#kubectl delete pv ${PV_NAME}
+#kubectl delete pvc -n ${NAMESPACE} ${PVC_NAME}
+
+# switch to destination cluster
+printf "\nSwitching to destination cluster ${DESTINATION_CLUSTER}.\n"
+az aks get-credentials --name ${DESTINATION_CLUSTER} --resource-group ${RESOURCE_GROUP}
+
+# create pv in destination cluster
+printf "\nCreating pv for ${USER_NAME}.\n"
+kubectl create -f "${USER_NAME}-pv.yaml"
+
+# create pvc in destination cluster
+printf "\nCreating pvc for ${USER_NAME}.\n"
+kubectl create -f "${USER_NAME}-pvc.yaml"
