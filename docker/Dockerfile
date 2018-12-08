@@ -28,6 +28,7 @@ RUN conda install --yes  \
     dask-kubernetes \
     datashader \
     distributed \
+    fastparquet \
     google-cloud-storage \
     pyviz/label/dev::geoviews \
     pyviz/label/dev::holoviews \
@@ -50,6 +51,7 @@ RUN conda install --yes  \
     numcodecs \
     numpy \
     pandas \
+    pyarrow \
     pyviz/label/dev::panel \
     pyproj \
     pytables \
