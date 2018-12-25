@@ -2,3 +2,5 @@
 .clientid
 .clientsecret
 aks-cluster-autoscaler.yaml
+*-pvc.yaml
+*-pv.yaml
